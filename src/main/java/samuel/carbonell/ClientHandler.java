@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ClientHandler implements Runnable {
     private Socket clientSocket;
@@ -30,8 +31,14 @@ public class ClientHandler implements Runnable {
         if (scanner.hasNextLine()) {
             clientName = scanner.nextLine();
             printWriter.println("Bienvenido, " + clientName + "!");
-            System.out.println("Nuevo cliente conectado: " + clientName + " (" + chatServer.getConnectedClients().size() + " usuarios conectados)");
+            System.out.println("Nuevo cliente conectado: " + clientName + " (" + chatServer.getConnectedClientsSize() + " usuarios conectados)");
             chatServer.sendToAllClients("se ha unido al chat.", this);
+        }
+        if (chatServer.offlineMessages.containsKey(clientName)) {
+            ConcurrentLinkedQueue<String> messages = chatServer.offlineMessages.remove(clientName);
+            for (String message : messages) {
+                sendMessage(message);
+            }
         }
         try {
             while (true) {
@@ -39,10 +46,11 @@ public class ClientHandler implements Runnable {
                     clientMessage = scanner.nextLine();
                     System.out.println(clientName + ": " + clientMessage);
                     if (clientMessage.equalsIgnoreCase("bye")){
-                        chatServer.removeClient(this);
                         clientSocket.close();
-                        System.out.println(clientName + "se ha desconectado." + " (" + chatServer.getConnectedClients().size() + " usuarios conectados)");
+                        chatServer.removeClient(this);
+                        System.out.println(clientName + "se ha desconectado." + " (" + chatServer.getConnectedClientsSize() + " usuarios conectados)");
                         chatServer.sendToAllClients("se ha desconectado.", this);
+
 
                     } else {
                         chatServer.sendToAllClients(clientMessage, this);
@@ -56,8 +64,10 @@ public class ClientHandler implements Runnable {
             printWriter.close();
             try {
                 clientSocket.close();
+                printWriter.close();
+                scanner.close();
                 chatServer.removeClient(this);
-                System.out.println(clientName + "se ha desconectado." + " (" + chatServer.getConnectedClients().size() + " usuarios conectados)");
+                System.out.println(clientName + "se ha desconectado." + " (" + chatServer.getConnectedClientsSize() + " usuarios conectados)");
                 chatServer.sendToAllClients("se ha desconectado.", this);
             } catch (IOException e) {
                 e.printStackTrace();

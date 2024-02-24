@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -12,6 +14,7 @@ public class ChatServer {
     private ExecutorService executorService;
     private List<ClientHandler> connectedClients;
     private Timer timer;
+    public ConcurrentHashMap<String, ConcurrentLinkedQueue<String>> offlineMessages = new ConcurrentHashMap<>();
 
 
     public ChatServer(int port) {
@@ -20,7 +23,7 @@ public class ChatServer {
             serverSocket = new ServerSocket(port);
             executorService = Executors.newCachedThreadPool();
             System.out.println("Servidor iniciado y escuchando en el puerto " + port);
-            System.out.println("Cliente conectadoss: " + connectedClients.size());
+            System.out.println("Cliente conectados: " + connectedClients.size());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -42,7 +45,7 @@ public class ChatServer {
         // SIGTERM
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Apagando servidor de manera ordenada...");
-            stopServer(2);
+            stopServer(5);
         }));
         while (true) {
             try {
@@ -57,8 +60,8 @@ public class ChatServer {
     }
 
 
-    public List<ClientHandler> getConnectedClients() {
-        return connectedClients;
+    public int getConnectedClientsSize() {
+        return connectedClients.size();
     }
 
     public void sendToAllClients(String message, ClientHandler clientHandler) {
@@ -68,9 +71,19 @@ public class ChatServer {
                     client.sendMessage("[" + clientHandler.getClientName() +  "]:  " + message);
                 }
             }
+            // Añade los mensajes a la cola de mensajes offline para los clientes desconectados
+            for (String offlineClient : offlineMessages.keySet()) {
+                if (!offlineClient.equals(clientHandler.getClientName())) {
+                    offlineMessages.get(offlineClient).add("[" + clientHandler.getClientName() + "]:  " + message);
+                }
+            }
         } else {
             for (ClientHandler client : connectedClients) {
                 client.sendMessage( message);
+            }
+            // Añade los mensajes a la cola de mensajes offline para los clientes desconectados
+            for (String offlineClient : offlineMessages.keySet()) {
+                offlineMessages.get(offlineClient).add(message);
             }
         }
 
@@ -78,6 +91,7 @@ public class ChatServer {
 
     public void removeClient(ClientHandler client) {
         connectedClients.remove(client);
+        offlineMessages.put(client.getClientName(), new ConcurrentLinkedQueue<>());
     }
 
     public void stopServer(int delayInSeconds) {
@@ -101,4 +115,5 @@ public class ChatServer {
 
         sendToAllClients("[SERVER] : El servidor se desconectará en " + delayInSeconds + " segundos.", null);
     }
+
 }
