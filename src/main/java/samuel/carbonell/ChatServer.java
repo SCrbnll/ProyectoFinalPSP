@@ -62,11 +62,18 @@ public class ChatServer {
     }
 
     public void sendToAllClients(String message, ClientHandler clientHandler) {
-        for (ClientHandler client : connectedClients) {
-            if (!client.equals(clientHandler)){
-                client.sendMessage(message);
+        if (clientHandler != null){
+            for (ClientHandler client : connectedClients) {
+                if (!client.equals(clientHandler)){
+                    client.sendMessage("[" + clientHandler.getClientName() +  "]:  " + message);
+                }
+            }
+        } else {
+            for (ClientHandler client : connectedClients) {
+                client.sendMessage( message);
             }
         }
+
     }
 
     public void removeClient(ClientHandler client) {
@@ -92,6 +99,6 @@ public class ChatServer {
             }
         }, delayInSeconds * 1000L);
 
-        sendToAllClients("SERVER: El servidor se desconectará en " + delayInSeconds + " segundos.", null);
+        sendToAllClients("[SERVER] : El servidor se desconectará en " + delayInSeconds + " segundos.", null);
     }
 }

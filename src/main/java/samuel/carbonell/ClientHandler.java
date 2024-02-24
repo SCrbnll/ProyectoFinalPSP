@@ -31,7 +31,7 @@ public class ClientHandler implements Runnable {
             clientName = scanner.nextLine();
             printWriter.println("Bienvenido, " + clientName + "!");
             System.out.println("Nuevo cliente conectado: " + clientName + " (" + chatServer.getConnectedClients().size() + " usuarios conectados)");
-            chatServer.sendToAllClients(clientName + " se ha unido al chat.", this);
+            chatServer.sendToAllClients("se ha unido al chat.", this);
         }
         try {
             while (true) {
@@ -41,11 +41,11 @@ public class ClientHandler implements Runnable {
                     if (clientMessage.equalsIgnoreCase("bye")){
                         chatServer.removeClient(this);
                         clientSocket.close();
-                        System.out.println(clientName + " se ha desconectado." + " (" + chatServer.getConnectedClients().size() + " usuarios conectados)");
-                        chatServer.sendToAllClients(clientName + " se ha desconectado.", this);
+                        System.out.println(clientName + "se ha desconectado." + " (" + chatServer.getConnectedClients().size() + " usuarios conectados)");
+                        chatServer.sendToAllClients("se ha desconectado.", this);
 
                     } else {
-                        chatServer.sendToAllClients(clientName + ": " + clientMessage, this);
+                        chatServer.sendToAllClients(clientMessage, this);
                     }
                 }
             }
@@ -57,8 +57,8 @@ public class ClientHandler implements Runnable {
             try {
                 clientSocket.close();
                 chatServer.removeClient(this);
-                System.out.println(clientName + " se ha desconectado." + " (" + chatServer.getConnectedClients().size() + " usuarios conectados)");
-                chatServer.sendToAllClients(clientName + " se ha desconectado.", this);
+                System.out.println(clientName + "se ha desconectado." + " (" + chatServer.getConnectedClients().size() + " usuarios conectados)");
+                chatServer.sendToAllClients("se ha desconectado.", this);
             } catch (IOException e) {
                 e.printStackTrace();
             }
