@@ -10,13 +10,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ChatServer {
-    private ServerSocket serverSocket;
-    private ExecutorService executorService;
-    private List<ClientHandler> connectedClients;
-    private Timer timer;
-    public ConcurrentHashMap<String, ConcurrentLinkedQueue<String>> offlineMessages = new ConcurrentHashMap<>();
+    private ServerSocket serverSocket; // Socket del servidor para aceptar conexiones de clientes.
+    private ExecutorService executorService; // Pool de hilos para manejar múltiples clientes
+    private List<ClientHandler> connectedClients;  // Lista de clientes conectados al servidor.
+    private Timer timer; // Temporizador para apagar el servidor después de un cierto tiempo.
+    public ConcurrentHashMap<String, ConcurrentLinkedQueue<String>> offlineMessages = new ConcurrentHashMap<>(); // Almacena los mensajes offline para cada cliente.
 
-
+    // Constructor del servidor. Inicializa el socket del servidor y el pool de hilos.
     public ChatServer(int port) {
         connectedClients = new ArrayList<>();
         try {
@@ -29,6 +29,7 @@ public class ChatServer {
         }
     }
 
+    // Inicia el servidor. Acepta conexiones de clientes y crea un nuevo hilo para cada uno.
     public void start() {
         // Hilo leer entrada del usuario desde la consola
         Thread consoleThread = new Thread(() -> {
@@ -59,11 +60,12 @@ public class ChatServer {
         }
     }
 
-
+    // Devuelve el número de clientes conectados.
     public int getConnectedClientsSize() {
         return connectedClients.size();
     }
 
+    // Envía un mensaje a todos los clientes conectados. Si se proporciona un cliente, no se envía el mensaje a ese cliente.
     public void sendToAllClients(String message, ClientHandler clientHandler) {
         if (clientHandler != null){
             for (ClientHandler client : connectedClients) {
@@ -89,11 +91,13 @@ public class ChatServer {
 
     }
 
+    // Elimina un cliente de la lista de clientes conectados y añade sus mensajes a la cola de mensajes offline.
     public void removeClient(ClientHandler client) {
         connectedClients.remove(client);
         offlineMessages.put(client.getClientName(), new ConcurrentLinkedQueue<>());
     }
 
+    // Detiene el servidor después de un cierto retraso. Envía un mensaje a todos los clientes antes de detenerse.
     public void stopServer(int delayInSeconds) {
         if (timer != null) {
             return;
